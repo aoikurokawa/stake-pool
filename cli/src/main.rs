@@ -12,9 +12,11 @@ fn main() {
 
     let crate_root = std::env::current_dir().unwrap();
     let out_dir = crate_root.join("idl");
-    let mut idl_path = out_dir.join("vault_whitelist");
+    let mut idl_path = out_dir.join("idl");
     idl_path.set_extension("json");
 
     let mut idl_json_file = File::create(idl_path).unwrap();
     idl_json_file.write_all(idl.as_bytes()).unwrap();
+
+    println!("Finish");
 }

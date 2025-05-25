@@ -699,8 +699,7 @@ pub(crate) enum StakeWithdrawSource {
     BorshDeserialize,
     BorshSerialize,
     BorshSchema,
-    CodamaAccount,
-    CodamaType,
+    CodamaAccount
 )]
 pub struct ValidatorStakeInfo {
     /// Amount of lamports on the validator stake account, including rent
