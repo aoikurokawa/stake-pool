@@ -7,6 +7,7 @@ use {
     },
     borsh::{BorshDeserialize, BorshSchema, BorshSerialize},
     bytemuck::{Pod, Zeroable},
+    codama::{CodamaAccount, CodamaType},
     num_derive::{FromPrimitive, ToPrimitive},
     num_traits::{FromPrimitive, ToPrimitive},
     solana_program::{
@@ -28,7 +29,9 @@ use {
 };
 
 /// Enum representing the account type managed by the program
-#[derive(Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
+#[derive(
+    Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema, CodamaType,
+)]
 pub enum AccountType {
     /// If the account has not been initialized, the enum will be 0
     #[default]
@@ -41,7 +44,9 @@ pub enum AccountType {
 
 /// Initialized program details.
 #[repr(C)]
-#[derive(Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
+#[derive(
+    Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema, CodamaAccount,
+)]
 pub struct StakePool {
     /// Account type, must be `StakePool` currently
     pub account_type: AccountType,
@@ -542,7 +547,9 @@ pub fn is_extension_supported_for_fee_account(extension_type: &ExtensionType) ->
 
 /// Storage list for all validator stake accounts in the pool.
 #[repr(C)]
-#[derive(Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
+#[derive(
+    Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema, CodamaAccount,
+)]
 pub struct ValidatorList {
     /// Data outside of the validator list, separated out for cheaper
     /// deserialization
@@ -554,7 +561,9 @@ pub struct ValidatorList {
 
 /// Helper type to deserialize just the start of a `ValidatorList`
 #[repr(C)]
-#[derive(Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
+#[derive(
+    Clone, Debug, Default, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema, CodamaType,
+)]
 pub struct ValidatorListHeader {
     /// Account type, must be `ValidatorList` currently
     pub account_type: AccountType,
@@ -574,6 +583,7 @@ pub struct ValidatorListHeader {
     BorshDeserialize,
     BorshSerialize,
     BorshSchema,
+    CodamaType,
 )]
 pub enum StakeStatus {
     /// Stake account is active, there may be a transient stake as well
@@ -611,6 +621,7 @@ impl Default for StakeStatus {
     BorshDeserialize,
     BorshSerialize,
     BorshSchema,
+    CodamaType,
 )]
 pub struct PodStakeStatus(u8);
 impl PodStakeStatus {
@@ -658,7 +669,7 @@ impl From<StakeStatus> for PodStakeStatus {
 }
 
 /// Withdrawal type, figured out during `process_withdraw_stake`
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, CodamaType)]
 pub(crate) enum StakeWithdrawSource {
     /// Some of an active stake account, but not all
     Active,
@@ -688,6 +699,8 @@ pub(crate) enum StakeWithdrawSource {
     BorshDeserialize,
     BorshSerialize,
     BorshSchema,
+    CodamaAccount,
+    CodamaType,
 )]
 pub struct ValidatorStakeInfo {
     /// Amount of lamports on the validator stake account, including rent
@@ -865,7 +878,9 @@ impl ValidatorListHeader {
 /// Wrapper type that "counts down" epochs, which is Borsh-compatible with the
 /// native `Option`
 #[repr(C)]
-#[derive(Clone, Copy, Debug, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema, CodamaType,
+)]
 pub enum FutureEpoch<T> {
     /// Nothing is set
     None,
@@ -923,7 +938,17 @@ impl<T> From<FutureEpoch<T>> for Option<T> {
 /// If either the numerator or the denominator is 0, the fee is considered to be
 /// 0
 #[repr(C)]
-#[derive(Clone, Copy, Debug, Default, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Default,
+    PartialEq,
+    BorshSerialize,
+    BorshDeserialize,
+    BorshSchema,
+    CodamaType,
+)]
 pub struct Fee {
     /// denominator of the fee ratio
     pub denominator: u64,
@@ -999,7 +1024,7 @@ impl fmt::Display for Fee {
 }
 
 /// The type of fees that can be set on the stake pool
-#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema)]
+#[derive(Clone, Debug, PartialEq, BorshDeserialize, BorshSerialize, BorshSchema, CodamaType)]
 pub enum FeeType {
     /// Referral fees for SOL deposits
     SolReferral(u8),

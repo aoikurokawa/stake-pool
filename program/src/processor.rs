@@ -3457,9 +3457,9 @@ impl Processor {
                     max_validators,
                 )
             }
-            StakePoolInstruction::AddValidatorToPool(seed) => {
+            StakePoolInstruction::AddValidatorToPool { args } => {
                 msg!("Instruction: AddValidatorToPool");
-                Self::process_add_validator_to_pool(program_id, accounts, seed)
+                Self::process_add_validator_to_pool(program_id, accounts, args)
             }
             StakePoolInstruction::RemoveValidatorFromPool => {
                 msg!("Instruction: RemoveValidatorFromPool");
@@ -3572,7 +3572,7 @@ impl Processor {
                 msg!("Instruction: DepositStake");
                 Self::process_deposit_stake(program_id, accounts, None)
             }
-            StakePoolInstruction::WithdrawStake(amount) => {
+            StakePoolInstruction::WithdrawStake { args: amount } => {
                 msg!("Instruction: WithdrawStake");
                 Self::process_withdraw_stake(program_id, accounts, amount, None)
             }
@@ -3588,15 +3588,15 @@ impl Processor {
                 msg!("Instruction: SetStaker");
                 Self::process_set_staker(program_id, accounts)
             }
-            StakePoolInstruction::SetFundingAuthority(funding_type) => {
+            StakePoolInstruction::SetFundingAuthority { args: funding_type } => {
                 msg!("Instruction: SetFundingAuthority");
                 Self::process_set_funding_authority(program_id, accounts, funding_type)
             }
-            StakePoolInstruction::DepositSol(lamports) => {
+            StakePoolInstruction::DepositSol { args: lamports } => {
                 msg!("Instruction: DepositSol");
                 Self::process_deposit_sol(program_id, accounts, lamports, None)
             }
-            StakePoolInstruction::WithdrawSol(pool_tokens) => {
+            StakePoolInstruction::WithdrawSol { args: pool_tokens } => {
                 msg!("Instruction: WithdrawSol");
                 Self::process_withdraw_sol(program_id, accounts, pool_tokens, None)
             }

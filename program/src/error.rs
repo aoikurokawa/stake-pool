@@ -1,13 +1,14 @@
 //! Error types
 
 use {
+    codama::CodamaErrors,
     num_derive::FromPrimitive,
     solana_program::{decode_error::DecodeError, program_error::ProgramError},
     thiserror::Error,
 };
 
 /// Errors that may be returned by the Stake Pool program.
-#[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
+#[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq, CodamaErrors)]
 pub enum StakePoolError {
     // 0.
     /// The account cannot be initialized because it is already being used.

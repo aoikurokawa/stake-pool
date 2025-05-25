@@ -15,6 +15,7 @@ use {
         MAX_VALIDATORS_TO_UPDATE,
     },
     borsh::{BorshDeserialize, BorshSchema, BorshSerialize},
+    codama::{CodamaInstructions, CodamaType},
     solana_program::{
         instruction::{AccountMeta, Instruction},
         program_error::ProgramError,
@@ -29,7 +30,7 @@ use {
 /// Defines which validator vote account is set during the
 /// `SetPreferredValidator` instruction
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema, CodamaType)]
 pub enum PreferredValidatorType {
     /// Set preferred validator for deposits
     Deposit,
@@ -40,7 +41,7 @@ pub enum PreferredValidatorType {
 /// Defines which authority to update in the `SetFundingAuthority`
 /// instruction
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize, BorshSchema, CodamaType)]
 pub enum FundingType {
     /// Sets the stake deposit authority
     StakeDeposit,
@@ -52,7 +53,7 @@ pub enum FundingType {
 
 /// Instructions supported by the `StakePool` program.
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize)]
+#[derive(Clone, Debug, PartialEq, BorshSerialize, BorshDeserialize, CodamaInstructions)]
 pub enum StakePoolInstruction {
     ///   Initializes a new `StakePool`.
     ///
@@ -71,6 +72,15 @@ pub enum StakePoolInstruction {
     ///      Defaults to the program address generated using
     ///      `find_deposit_authority_program_address`, making deposits
     ///      permissionless.
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "manager", signer))]
+    #[codama(account(name = "staker"))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake"))]
+    #[codama(account(name = "pool_mint"))]
+    #[codama(account(name = "manager_fee"))]
+    #[codama(account(name = "token_program"))]
     Initialize {
         /// Fee assessed as percentage of perceived rewards
         fee: Fee,
@@ -110,7 +120,20 @@ pub enum StakePoolInstruction {
     ///
     ///  User data: optional non-zero `u32` seed used for generating the
     ///  validator stake address
-    AddValidatorToPool(u32),
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "reserve_stake", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "stake", writable))]
+    #[codama(account(name = "validator_vote"))]
+    #[codama(account(name = "rent"))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "stake_config"))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "stake_program"))]
+    AddValidatorToPool { args: u32 },
 
     ///   (Staker only) Removes validator from the pool, deactivating its stake
     ///
@@ -127,6 +150,14 @@ pub enum StakePoolInstruction {
     ///   5. `[w]` Transient stake account, to deactivate if necessary
     ///   6. `[]` Sysvar clock
     ///   7. `[]` Stake program id,
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "stake_account", writable))]
+    #[codama(account(name = "transient_stake_account", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_program"))]
     RemoveValidatorFromPool,
 
     /// NOTE: This instruction has been deprecated since version 0.7.0. Please
@@ -159,6 +190,16 @@ pub enum StakePoolInstruction {
     ///  7. `[]` Rent sysvar
     ///  8. `[]` System program
     ///  9. `[]` Stake program
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "validator_stake_account", writable))]
+    #[codama(account(name = "transient_stake_account", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "rent"))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "stake_program"))]
     DecreaseValidatorStake {
         /// amount of lamports to split into the transient stake account
         lamports: u64,
@@ -200,6 +241,20 @@ pub enum StakePoolInstruction {
     ///
     /// The rent-exemption of the stake account is withdrawn back to the
     /// reserve after it is merged.
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "transient_stake_account", writable))]
+    #[codama(account(name = "validator_stake_account"))]
+    #[codama(account(name = "validator_vote_account"))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "rent"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "stake_config"))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "stake_program"))]
     IncreaseValidatorStake {
         /// amount of lamports to increase on the given validator
         lamports: u64,
@@ -220,6 +275,9 @@ pub enum StakePoolInstruction {
     /// 2. `[]` Validator list
     ///
     /// Fails if the validator is not part of the stake pool.
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "validator_list"))]
     SetPreferredValidator {
         /// Affected operation (deposit or withdraw)
         validator_type: PreferredValidatorType,
@@ -245,6 +303,13 @@ pub enum StakePoolInstruction {
     ///  5. `[]` Sysvar stake history
     ///  6. `[]` Stake program
     ///  7. `..7+2N` [] N pairs of validator and transient stake accounts
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "stake_program"))]
     UpdateValidatorListBalance {
         /// Index to start updating on the validator list
         start_index: u32,
@@ -265,12 +330,21 @@ pub enum StakePoolInstruction {
     ///   4. `[w]` Account to receive pool fee tokens
     ///   5. `[w]` Pool mint account
     ///   6. `[]` Pool token program
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "withdraw"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake"))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "token_program"))]
     UpdateStakePoolBalance,
 
     ///   Cleans up validator stake account entries marked as `ReadyForRemoval`
     ///
     ///   0. `[]` Stake pool
     ///   1. `[w]` Validator stake list storage account
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "validator_list", writable))]
     CleanupRemovedValidatorEntries,
 
     ///   Deposit some stake into the pool. The output is a "pool" token
@@ -296,6 +370,21 @@ pub enum StakePoolInstruction {
     ///   12. '[]' Sysvar stake history account
     ///   13. `[]` Pool token program id,
     ///   14. `[]` Stake program id,
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "stake_deposit_authority", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "stake", writable))]
+    #[codama(account(name = "validator_stake_account", writable))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "dest_user_pool", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "referrer_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "token_program"))]
+    #[codama(account(name = "stake_program"))]
     DepositStake,
 
     ///   Withdraw the token from the pool at the current ratio.
@@ -334,7 +423,21 @@ pub enum StakePoolInstruction {
     ///  12. `[]` Stake program id,
     ///
     ///  User data: amount of pool tokens to withdraw
-    WithdrawStake(u64),
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "stake_split_from", writable))]
+    #[codama(account(name = "stake_split_to", writable))]
+    #[codama(account(name = "user_stake_authority"))]
+    #[codama(account(name = "user_transfer_authority", signer))]
+    #[codama(account(name = "burn_from_pool", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "token_program"))]
+    #[codama(account(name = "stake_program"))]
+    #[codama(account(name = "stake_program"))]
+    WithdrawStake { args: u64 },
 
     ///  (Manager only) Update manager
     ///
@@ -342,12 +445,18 @@ pub enum StakePoolInstruction {
     ///  1. `[s]` Manager
     ///  2. `[s]` New manager
     ///  3. `[]` New manager fee account
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "manager", signer))]
+    #[codama(account(name = "new_manager", signer))]
+    #[codama(account(name = "new_manager_fee"))]
     SetManager,
 
     ///  (Manager only) Update fee
     ///
     ///  0. `[w]` Stake pool
     ///  1. `[s]` Manager
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "manager", signer))]
     SetFee {
         /// Type of fee to update and value to update it to
         fee: FeeType,
@@ -358,6 +467,9 @@ pub enum StakePoolInstruction {
     ///  0. `[w]` Stake pool
     ///  1. `[s]` Manager or current staker
     ///  2. '[]` New staker pubkey
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "manager", signer))]
+    #[codama(account(name = "new_staker"))]
     SetStaker,
 
     ///   Deposit SOL directly into the pool's reserve account. The output is a
@@ -375,7 +487,17 @@ pub enum StakePoolInstruction {
     ///   8. `[]` System program account
     ///   9. `[]` Token program id
     ///  10. `[s]` (Optional) Stake pool sol deposit authority.
-    DepositSol(u64),
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "from_user_lamports", signer))]
+    #[codama(account(name = "dest_user_pool", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "referrer_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "token_program"))]
+    DepositSol { args: u64 },
 
     ///  (Manager only) Update SOL deposit, stake deposit, or SOL withdrawal
     /// authority.
@@ -383,7 +505,10 @@ pub enum StakePoolInstruction {
     ///  0. `[w]` Stake pool
     ///  1. `[s]` Manager
     ///  2. '[]` New authority pubkey or none
-    SetFundingAuthority(FundingType),
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "manager", signer))]
+    #[codama(account(name = "new_authority"))]
+    SetFundingAuthority { args: FundingType },
 
     ///   Withdraw SOL directly from the pool's reserve account. Fails if the
     ///   reserve does not have enough SOL.
@@ -402,7 +527,19 @@ pub enum StakePoolInstruction {
     ///  10. `[]` Stake program account
     ///  11. `[]` Token program id
     ///  12. `[s]` (Optional) Stake pool sol withdraw authority
-    WithdrawSol(u64),
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "user_transfer_authority", signer))]
+    #[codama(account(name = "burn_from_pool", writable))]
+    #[codama(account(name = "reserve_stake", writable))]
+    #[codama(account(name = "destination_lamports", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "stake_program"))]
+    #[codama(account(name = "token_program"))]
+    WithdrawSol { args: u64 },
 
     /// Create token metadata for the stake-pool token in the
     /// metaplex-token program
@@ -414,6 +551,14 @@ pub enum StakePoolInstruction {
     /// 5. `[w]` Token metadata account
     /// 6. `[]` Metadata program id
     /// 7. `[]` System program id
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "manager", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "pool_mint"))]
+    #[codama(account(name = "payer", writable, signer))]
+    #[codama(account(name = "metadata", writable))]
+    #[codama(account(name = "mpl_token_metadata_program"))]
+    #[codama(account(name = "system_program"))]
     CreateTokenMetadata {
         /// Token name
         name: String,
@@ -430,6 +575,11 @@ pub enum StakePoolInstruction {
     /// 2. `[]` Stake pool withdraw authority
     /// 3. `[w]` Token metadata account
     /// 4. `[]` Metadata program id
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "manager", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "metadata", writable))]
+    #[codama(account(name = "mpl_token_metadata_program"))]
     UpdateTokenMetadata {
         /// Token name
         name: String,
@@ -475,6 +625,20 @@ pub enum StakePoolInstruction {
     ///
     /// The rent-exemption of the stake account is withdrawn back to the
     /// reserve after it is merged.
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "staker", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "ephemeral_stake_account", writable))]
+    #[codama(account(name = "transient_stake_account", writable))]
+    #[codama(account(name = "validator_stake_account"))]
+    #[codama(account(name = "validator_vote_account"))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "stake_config"))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "stake_program"))]
     IncreaseAdditionalValidatorStake {
         /// amount of lamports to increase on the given validator
         lamports: u64,
@@ -513,6 +677,18 @@ pub enum StakePoolInstruction {
     ///  9. '[]' Stake history sysvar
     /// 10. `[]` System program
     /// 11. `[]` Stake program
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake", writable))]
+    #[codama(account(name = "validator_stake_account", writable))]
+    #[codama(account(name = "ephemeral_stake_account", writable))]
+    #[codama(account(name = "transient_stake_account", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "stake_program"))]
     DecreaseAdditionalValidatorStake {
         /// amount of lamports to split into the transient stake account
         lamports: u64,
@@ -552,6 +728,17 @@ pub enum StakePoolInstruction {
     ///  8. '[]' Stake history sysvar
     ///  9. `[]` System program
     /// 10. `[]` Stake program
+    #[codama(account(name = "stake_pool"))]
+    #[codama(account(name = "staker", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "validator_stake_account", writable))]
+    #[codama(account(name = "transient_stake_account", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "stake_program"))]
     DecreaseValidatorStakeWithReserve {
         /// amount of lamports to split into the transient stake account
         lamports: u64,
@@ -653,6 +840,21 @@ pub enum StakePoolInstruction {
     ///   12. '[]' Sysvar stake history account
     ///   13. `[]` Pool token program id,
     ///   14. `[]` Stake program id,
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "stake_deposit_authority", signer))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "stake", writable))]
+    #[codama(account(name = "validator_stake_account", writable))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "dest_user_pool", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "referrer_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "token_program"))]
+    #[codama(account(name = "stake_program"))]
     DepositStakeWithSlippage {
         /// Minimum amount of pool tokens that must be received
         minimum_pool_tokens_out: u64,
@@ -683,6 +885,20 @@ pub enum StakePoolInstruction {
     ///  12. `[]` Stake program id,
     ///
     ///  User data: amount of pool tokens to withdraw
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "validator_list", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "stake_split_from", writable))]
+    #[codama(account(name = "stake_split_to", writable))]
+    #[codama(account(name = "user_stake_authority"))]
+    #[codama(account(name = "user_transfer_authority", signer))]
+    #[codama(account(name = "burn_from_pool", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "token_program"))]
+    #[codama(account(name = "stake_program"))]
+    #[codama(account(name = "stake_program"))]
     WithdrawStakeWithSlippage {
         /// Pool tokens to burn in exchange for lamports
         pool_tokens_in: u64,
@@ -706,6 +922,16 @@ pub enum StakePoolInstruction {
     ///   8. `[]` System program account
     ///   9. `[]` Token program id
     ///  10. `[s]` (Optional) Stake pool sol deposit authority.
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "reserve_stake_account", writable))]
+    #[codama(account(name = "from_user_lamports", signer))]
+    #[codama(account(name = "dest_user_pool", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "referrer_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "system_program"))]
+    #[codama(account(name = "token_program"))]
     DepositSolWithSlippage {
         /// Amount of lamports to deposit into the reserve
         lamports_in: u64,
@@ -731,6 +957,18 @@ pub enum StakePoolInstruction {
     ///  10. `[]` Stake program account
     ///  11. `[]` Token program id
     ///  12. `[s]` (Optional) Stake pool sol withdraw authority
+    #[codama(account(name = "stake_pool", writable))]
+    #[codama(account(name = "withdraw_authority"))]
+    #[codama(account(name = "user_transfer_authority", signer))]
+    #[codama(account(name = "burn_from_pool", writable))]
+    #[codama(account(name = "reserve_stake", writable))]
+    #[codama(account(name = "destination_lamports", writable))]
+    #[codama(account(name = "manager_fee", writable))]
+    #[codama(account(name = "pool_mint", writable))]
+    #[codama(account(name = "clock"))]
+    #[codama(account(name = "stake_history"))]
+    #[codama(account(name = "stake_program"))]
+    #[codama(account(name = "token_program"))]
     WithdrawSolWithSlippage {
         /// Pool tokens to burn in exchange for lamports
         pool_tokens_in: u64,
@@ -816,10 +1054,9 @@ pub fn add_validator_to_pool(
         AccountMeta::new_readonly(system_program::id(), false),
         AccountMeta::new_readonly(stake::program::id(), false),
     ];
-    let data = borsh::to_vec(&StakePoolInstruction::AddValidatorToPool(
-        seed.map(|s| s.get()).unwrap_or(0),
-    ))
-    .unwrap();
+
+    let seed = seed.map(|s| s.get()).unwrap_or(0);
+    let data = borsh::to_vec(&StakePoolInstruction::AddValidatorToPool { args: seed }).unwrap();
     Instruction {
         program_id: *program_id,
         accounts,
@@ -2060,7 +2297,7 @@ fn deposit_sol_internal(
         Instruction {
             program_id: *program_id,
             accounts,
-            data: borsh::to_vec(&StakePoolInstruction::DepositSol(lamports_in)).unwrap(),
+            data: borsh::to_vec(&StakePoolInstruction::DepositSol { args: lamports_in }).unwrap(),
         }
     }
 }
@@ -2242,7 +2479,10 @@ fn withdraw_stake_internal(
         Instruction {
             program_id: *program_id,
             accounts,
-            data: borsh::to_vec(&StakePoolInstruction::WithdrawStake(pool_tokens_in)).unwrap(),
+            data: borsh::to_vec(&StakePoolInstruction::WithdrawStake {
+                args: pool_tokens_in,
+            })
+            .unwrap(),
         }
     }
 }
@@ -2362,7 +2602,10 @@ fn withdraw_sol_internal(
         Instruction {
             program_id: *program_id,
             accounts,
-            data: borsh::to_vec(&StakePoolInstruction::WithdrawSol(pool_tokens_in)).unwrap(),
+            data: borsh::to_vec(&StakePoolInstruction::WithdrawSol {
+                args: pool_tokens_in,
+            })
+            .unwrap(),
         }
     }
 }
@@ -2577,7 +2820,8 @@ pub fn set_funding_authority(
     Instruction {
         program_id: *program_id,
         accounts,
-        data: borsh::to_vec(&StakePoolInstruction::SetFundingAuthority(funding_type)).unwrap(),
+        data: borsh::to_vec(&StakePoolInstruction::SetFundingAuthority { args: funding_type })
+            .unwrap(),
     }
 }
 
